@@ -148,6 +148,36 @@ function _islandora_solr_facet_pages_letterer($solr, $solr_field) {
     'qt' => variable_get('islandora_solr_request_handler', 'standard'),
   );
 
+  // get base filter to filter by site
+  $base_filters = preg_split("/\\r\\n|\\n|\\r/", variable_get('islandora_solr_base_filter', ''), -1, PREG_SPLIT_NO_EMPTY);
+  if (!empty($base_filters)) {
+    $params['fq'] = $base_filters;
+  }
+
+    // Restrict results based on collection
+    $site_root = variable_get('islandora_repository_pid', 'islandora:root');
+    if ((isset($_GET['collection']))&&($_GET['collection'] != $site_root))
+    {
+      $collection = $_GET['collection'];
+      $collections_filter = '';
+      $fedora_object = islandora_object_load(variable_get('islandora_repository_pid', 'islandora:root'));
+      $itqlquery = 'select $subject $content from <#ri>
+               where  ($subject <fedora-model:hasModel> $content and ($content <mulgara:is> <info:fedora/islandora:collectionCModel>
+                    or $content <mulgara:is> <info:fedora/islandora:newspaperCModel>))
+               and walk($subject <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $collection . '>
+               and $subject <fedora-rels-ext:isMemberOfCollection> $object)
+               and $subject <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
+      $results = $fedora_object->repository->ri->itqlQuery($itqlquery, 'unlimited');
+      foreach ($results as $result) {
+          if ($result['content']['value'] == 'islandora:collectionCModel')
+              $collections_filter = $collections_filter . 'RELS_EXT_isMemberOfCollection_uri_ms:info\:fedora/' . str_replace(':', '\:', $result['subject']['value']) . ' OR ';
+          if ($result['content']['value'] == 'islandora:newspaperCModel')
+              $collections_filter = $collections_filter . 'RELS_EXT_isMemberOf_uri_ms:info\:fedora/' . str_replace(':', '\:', $result['subject']['value']) . ' OR ';
+      }
+      $collections_filter = $collections_filter . 'RELS_EXT_isMemberOfCollection_uri_ms:info\:fedora/' . str_replace(':', '\:', $collection);
+      $params['fq'][] = trim($collections_filter);
+    }
+
   // Set query.
   $query = "$solr_field:[* TO *]";
   // Solr results in JSON format.
@@ -190,6 +220,36 @@ function _islandora_solr_facet_pages_results($solr, $solr_field, $prefix) {
     'facet.limit' => variable_get('islandora_solr_facet_pages_facet_limit', 100000),
     'qt' => variable_get('islandora_solr_request_handler', 'standard'),
   );
+
+  // get base filter to filter by site
+  $base_filters = preg_split("/\\r\\n|\\n|\\r/", variable_get('islandora_solr_base_filter', ''), -1, PREG_SPLIT_NO_EMPTY);
+  if (!empty($base_filters)) {
+    $facet_params['fq'] = $base_filters;
+  }
+
+    // Restrict results based on collection
+    $site_root = variable_get('islandora_repository_pid', 'islandora:root');
+    if ((isset($_GET['collection']))&&($_GET['collection'] != $site_root))
+    {
+      $collection = $_GET['collection'];
+      $collections_filter = '';
+      $fedora_object = islandora_object_load(variable_get('islandora_repository_pid', 'islandora:root'));
+      $itqlquery = 'select $subject $content from <#ri>
+               where  ($subject <fedora-model:hasModel> $content and ($content <mulgara:is> <info:fedora/islandora:collectionCModel>
+                    or $content <mulgara:is> <info:fedora/islandora:newspaperCModel>))
+               and walk($subject <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $collection . '>
+               and $subject <fedora-rels-ext:isMemberOfCollection> $object)
+               and $subject <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
+      $results = $fedora_object->repository->ri->itqlQuery($itqlquery, 'unlimited');
+      foreach ($results as $result) {
+          if ($result['content']['value'] == 'islandora:collectionCModel')
+              $collections_filter = $collections_filter . 'RELS_EXT_isMemberOfCollection_uri_ms:info\:fedora/' . str_replace(':', '\:', $result['subject']['value']) . ' OR ';
+          if ($result['content']['value'] == 'islandora:newspaperCModel')
+              $collections_filter = $collections_filter . 'RELS_EXT_isMemberOf_uri_ms:info\:fedora/' . str_replace(':', '\:', $result['subject']['value']) . ' OR ';
+      }
+      $collections_filter = $collections_filter . 'RELS_EXT_isMemberOfCollection_uri_ms:info\:fedora/' . str_replace(':', '\:', $collection);
+      $facet_params['fq'][] = trim($collections_filter);
+    }
 
   // Set the facet prefix.
   if ($prefix != t('ALL')) {
