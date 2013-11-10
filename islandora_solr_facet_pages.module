@@ -132,7 +132,8 @@ function _islandora_solr_facet_pages_letterer($solr, $solr_field) {
   $fq = array();
   $fq_map = array();
   foreach (range('A', 'Z') as $letter) {
-    $value = "$solr_field:$letter*";
+    //$value = "$solr_field:$letter*";
+    $value = "$solr_field:$letter* OR  $solr_field:" . strtolower($letter) . "*";
     $fq_map[$value] = $letter;
     $fq[] = $value;
   }
@@ -152,6 +153,11 @@ function _islandora_solr_facet_pages_letterer($solr, $solr_field) {
   $base_filters = preg_split("/\\r\\n|\\n|\\r/", variable_get('islandora_solr_base_filter', ''), -1, PREG_SPLIT_NO_EMPTY);
   if (!empty($base_filters)) {
     $params['fq'] = $base_filters;
+  }
+
+  if (!isset($_GET['collection'])) {
+      $params['fq'][] = '-RELS_EXT_hasModel_uri_ms:info\:fedora/islandora\:pageCModel';
+      $params['fq'][] = '-RELS_EXT_hasModel_uri_ms:info\:fedora/islandora\:newspaperPageCModel';
   }
 
     // Restrict results based on collection
@@ -225,6 +231,11 @@ function _islandora_solr_facet_pages_results($solr, $solr_field, $prefix) {
   $base_filters = preg_split("/\\r\\n|\\n|\\r/", variable_get('islandora_solr_base_filter', ''), -1, PREG_SPLIT_NO_EMPTY);
   if (!empty($base_filters)) {
     $facet_params['fq'] = $base_filters;
+  }
+
+  if (!isset($_GET['collection'])) {
+      $facet_params['fq'][] = '-RELS_EXT_hasModel_uri_ms:info\:fedora/islandora\:pageCModel';
+      $facet_params['fq'][] = '-RELS_EXT_hasModel_uri_ms:info\:fedora/islandora\:newspaperPageCModel';
   }
 
     // Restrict results based on collection
