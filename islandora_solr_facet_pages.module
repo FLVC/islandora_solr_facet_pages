@@ -184,6 +184,13 @@ function _islandora_solr_facet_pages_letterer($solr, $solr_field) {
       $params['fq'][] = trim($collections_filter);
     }
 
+  // call hook to get additional filter queries
+  $query_processor = new IslandoraSolrQueryProcessor();
+  module_invoke_all('islandora_solr_query', $query_processor);
+  foreach ($query_processor->solrParams['fq'] as $filter) {
+    $facet_params['fq'][] = $filter;
+  }
+
   // Set query.
   $query = "$solr_field:[* TO *]";
   // Solr results in JSON format.
@@ -261,6 +268,13 @@ function _islandora_solr_facet_pages_results($solr, $solr_field, $prefix) {
       $collections_filter = $collections_filter . 'RELS_EXT_isMemberOfCollection_uri_ms:info\:fedora/' . str_replace(':', '\:', $collection);
       $facet_params['fq'][] = trim($collections_filter);
     }
+
+  // call hook to get additional filter queries
+  $query_processor = new IslandoraSolrQueryProcessor();
+  module_invoke_all('islandora_solr_query', $query_processor);
+  foreach ($query_processor->solrParams['fq'] as $filter) {
+    $facet_params['fq'][] = $filter;
+  } 
 
   // Set the facet prefix.
   if ($prefix != t('ALL')) {
