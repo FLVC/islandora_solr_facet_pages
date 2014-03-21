@@ -389,13 +389,7 @@ function islandora_solr_facet_pages_callback($path = NULL, $prefix = NULL) {
   $solr = new Apache_Solr_Service($parsed_url['host'], $parsed_url['port'], $parsed_url['path']);
 
   // Render letters.
-  if ($facet_report) {
-    $letterer_arr = array();
-    $letterer_arr['fq_map'] = array();
-  }
-  else {  
-    $letterer_arr = _islandora_solr_facet_pages_letterer($solr, $solr_field);
-  }
+  $letterer_arr = _islandora_solr_facet_pages_letterer($solr, $solr_field);
   $letterer = theme('islandora_solr_facet_pages_letterer', array(
     'facet_queries' => $letterer_arr['facet_queries'],
     'fq_map' => $letterer_arr['fq_map'],

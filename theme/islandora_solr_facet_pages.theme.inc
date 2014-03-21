@@ -74,11 +74,14 @@ function theme_islandora_solr_facet_pages_letterer(&$vars) {
 
   $output = '<ul class="islandora-solr-facet-pages-letterer">';
 
-  if ($path != 'report') {
+  if ($path == 'report') {
+    $output .= '</ul>';
+    return $output;
+  }
+
   $output .= '<li class="letter first' . ((t('ALL') == $prefix) ? ' active' : '') . '">';
   $output .= '<a href="' . url('browse/' . $path) . '" title="' . t('Browse all') . '">' . t('ALL') . '</a>';
   $output .= '</li>';
-  }
 
   // Loop over facet queries to render letters.
   foreach ($facet_queries as $query => $count) {
