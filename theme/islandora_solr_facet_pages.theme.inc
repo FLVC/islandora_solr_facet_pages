@@ -74,9 +74,11 @@ function theme_islandora_solr_facet_pages_letterer(&$vars) {
 
   $output = '<ul class="islandora-solr-facet-pages-letterer">';
 
+  if ($path != 'report') {
   $output .= '<li class="letter first' . ((t('ALL') == $prefix) ? ' active' : '') . '">';
   $output .= '<a href="' . url('browse/' . $path) . '" title="' . t('Browse all') . '">' . t('ALL') . '</a>';
   $output .= '</li>';
+  }
 
   // Loop over facet queries to render letters.
   foreach ($facet_queries as $query => $count) {
@@ -87,7 +89,12 @@ function theme_islandora_solr_facet_pages_letterer(&$vars) {
     // Create link if facet bucket is not empty.
     if ($count > 0) {
       $url = 'browse/' . $path . '/' . $value;
-      $output .= '<a href="' . url($url) . '" title="' . t('Browse starting with @letter', array('@letter' => $value)) . '">' . $value . '</a>';
+      if (isset($collection)) {
+        $output .= '<a href="' . url($url, array('query' => array('collection' => $collection))) . '" title="' . t('Browse starting with @letter', array('@letter' => $value)) . '">' . $value . '</a>';
+      }
+      else {
+        $output .= '<a href="' . url($url) . '" title="' . t('Browse starting with @letter', array('@letter' => $value)) . '">' . $value . '</a>';
+      }
     }
     else {
       $output .= $value;
