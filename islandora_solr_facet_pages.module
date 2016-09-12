@@ -176,13 +176,20 @@ function _islandora_solr_facet_pages_letterer($solr, $solr_field, $search_term =
       $collection = $_GET['collection'];
       $collections_filter = '';
       $fedora_object = islandora_object_load(variable_get('islandora_repository_pid', 'islandora:root'));
-      $itqlquery = 'select $subject $content from <#ri>
-               where  ($subject <fedora-model:hasModel> $content and ($content <mulgara:is> <info:fedora/islandora:collectionCModel>
-                    or $content <mulgara:is> <info:fedora/islandora:newspaperCModel>))
-               and walk($subject <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $collection . '>
-               and $subject <fedora-rels-ext:isMemberOfCollection> $object)
-               and $subject <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
-      $results = $fedora_object->repository->ri->itqlQuery($itqlquery, 'unlimited');
+      $collectquery = <<<'EOQ'
+SELECT ?subject ?content
+FROM <#ri>
+WHERE {
+  ?subject <fedora-model:hasModel> ?content;
+           <fedora-rels-ext:isMemberOfCollection>+ <info:fedora/!pid>;
+           <fedora-model:state> <info:fedora/fedora-system:def/model#Active> .
+FILTER(sameTerm(?content, <info:fedora/islandora:collectionCModel>) || sameTerm(?content, <info:fedora/islandora:newspaperCModel>))
+}
+EOQ;
+      $formatted_collectquery = format_string($collectquery, array(
+        '!pid' => $collection,
+      ));
+      $results = $fedora_object->repository->ri->sparqlQuery($formatted_collectquery, 'unlimited');
       foreach ($results as $result) {
           if ($result['content']['value'] == 'islandora:collectionCModel')
               $collections_filter = $collections_filter . 'RELS_EXT_isMemberOfCollection_uri_ms:info\:fedora/' . str_replace(':', '\:', $result['subject']['value']) . ' OR ';
@@ -290,13 +297,20 @@ function _islandora_solr_facet_pages_results($solr, $solr_field, $prefix, $searc
       $collection = $_GET['collection'];
       $collections_filter = '';
       $fedora_object = islandora_object_load(variable_get('islandora_repository_pid', 'islandora:root'));
-      $itqlquery = 'select $subject $content from <#ri>
-               where  ($subject <fedora-model:hasModel> $content and ($content <mulgara:is> <info:fedora/islandora:collectionCModel>
-                    or $content <mulgara:is> <info:fedora/islandora:newspaperCModel>))
-               and walk($subject <fedora-rels-ext:isMemberOfCollection> <info:fedora/' . $collection . '>
-               and $subject <fedora-rels-ext:isMemberOfCollection> $object)
-               and $subject <fedora-model:state> <info:fedora/fedora-system:def/model#Active>';
-      $results = $fedora_object->repository->ri->itqlQuery($itqlquery, 'unlimited');
+      $collectquery = <<<'EOQ'
+SELECT ?subject ?content
+FROM <#ri>
+WHERE {
+  ?subject <fedora-model:hasModel> ?content;
+           <fedora-rels-ext:isMemberOfCollection>+ <info:fedora/!pid>;
+           <fedora-model:state> <info:fedora/fedora-system:def/model#Active> .
+FILTER(sameTerm(?content, <info:fedora/islandora:collectionCModel>) || sameTerm(?content, <info:fedora/islandora:newspaperCModel>))
+}
+EOQ;
+      $formatted_collectquery = format_string($collectquery, array(
+        '!pid' => $collection,
+      ));
+      $results = $fedora_object->repository->ri->sparqlQuery($formatted_collectquery, 'unlimited');
       foreach ($results as $result) {
           if ($result['content']['value'] == 'islandora:collectionCModel')
               $collections_filter = $collections_filter . 'RELS_EXT_isMemberOfCollection_uri_ms:info\:fedora/' . str_replace(':', '\:', $result['subject']['value']) . ' OR ';
